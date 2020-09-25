@@ -1,0 +1,27 @@
+#!/bin/sh
+# n0
+# headless screenshot utility
+# depends on wkhtmltoimage
+# a110w
+
+while IFS= read host
+do
+#	host=$(echo "$host" | sed 's/^\(http\|https\):\/\///;s/\\///' )
+	host=$(echo "$host" | sed 's/\(http\|https\):\/\///;s/\///' ) 
+	sleep 0.5
+	printf "screenshotting %s..." "$host"
+	wkhtmltoimage -qn --load-error-handling skip "$host" "$host.png" 2>/dev/null && {
+		printf "OK\n" && gen=1
+	} || {
+		printf "ERROR\n"
+	}
+done < ${1:-/dev/stdin}
+
+html_report() {
+	printf "<HTML><BODY><BR>" > screenshots.html
+	ls -1 *.png | awk -F : '{ print $1":"$2"\n<BR><IMG SRC=\""$1""$2"\" width=400><BR><BR>"}' >> screenshots.html
+	printf "</BODY></HTML>" >> screenshots.html
+	printf "generating final html report...done\n"
+}
+
+[ $gen ] && html_report || printf "there were no screenshots recorded\n"
